@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+streamlit
+pdfplumber
+faiss-cpu
+sentence-transformers
+numpy
+requests
+watchdog
