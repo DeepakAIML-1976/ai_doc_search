@@ -56,10 +56,9 @@ if query:
     # Run search
     results = retriever.get_relevant_documents(query)
     docs = []
-    if results and len(results[0]) > 0:
-    top_result = results[0][0]
-else:
-    print("No results found.")
+if len(results) == 0:
+        st.warning("No results found for this query.")
+    else:
     for r in results:
         r.metadata["id"] = f"{r.metadata.get('source')}::{r.metadata.get('page', 0)}"
         docs.append({
