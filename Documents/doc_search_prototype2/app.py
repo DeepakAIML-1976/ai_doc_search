@@ -53,7 +53,6 @@ with st.sidebar:
 # User query input
 query = st.text_input("Enter your question:")
 if query:
-if query:
     # Run search
     results = retriever.get_relevant_documents(query)
     docs = []
