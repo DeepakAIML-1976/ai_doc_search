@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environments
+.env
+.venv/
+.env.*
+
+# Streamlit
+.streamlit/
+
+# Data files
+data/vector_store/
+data/feedback_log.json
+data/*.pkl

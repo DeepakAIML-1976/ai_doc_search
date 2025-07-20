@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+streamlit
+pdfplumber
+faiss-cpu
+sentence-transformers
+numpy
+requests
+watchdog
+tiktoken
+python-dotenv
+PyPDF2
+docx2txt
