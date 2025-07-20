@@ -11,3 +11,4 @@ tiktoken
 python-dotenv
 PyPDF2
 docx2txt
+langchain
