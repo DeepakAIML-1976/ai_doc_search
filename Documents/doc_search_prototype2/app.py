@@ -53,20 +53,23 @@ with st.sidebar:
 # User query input
 query = st.text_input("Enter your question:")
 if query:
+if query:
     # Run search
     results = retriever.get_relevant_documents(query)
     docs = []
+
     if not results:
         st.warning("No results found for this query.")
     else:
-    for r in results:
-        r.metadata["id"] = f"{r.metadata.get('source')}::{r.metadata.get('page', 0)}"
-        docs.append({
-            "id": r.metadata["id"],
-            "content": r.page_content,
-            "source": r.metadata.get("source"),
-            "page": r.metadata.get("page", 0)
-        })
+        for r in results:
+            r.metadata["id"] = f"{r.metadata.get('source')}::{r.metadata.get('page', 0)}"
+            docs.append({
+                "id": r.metadata["id"],
+                "content": r.page_content,
+                "source": r.metadata.get("source"),
+                "page": r.metadata.get("page", 0)
+            })
+
 
     # Filter using prior feedback
     docs = filter_no_feedback(docs, query, feedback_log)
