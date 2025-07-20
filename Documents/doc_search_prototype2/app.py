@@ -1,6 +1,6 @@
 import streamlit as st
 from app.doc_ingestor import ingest_documents
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
@@ -11,6 +11,9 @@ from app.utils import load_feedback, save_feedback, filter_no_feedback
 # Load environment variable
 import dotenv
 dotenv.load_dotenv()
+
+os.makedirs("data/documents", exist_ok=True)
+os.makedirs("data/vector_store", exist_ok=True)
 
 # Constants
 DB_FAISS_PATH = "data/vector_store"
