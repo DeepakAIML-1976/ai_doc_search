@@ -1,0 +1,5 @@
+SPECIFICATION FOR STAINLESS STEEL PIPE
+Material: ASTM A312 TP316L
+Design Pressure: 150 psig
+Design Temperature: 200°F
+Fluid: Sour Gas
