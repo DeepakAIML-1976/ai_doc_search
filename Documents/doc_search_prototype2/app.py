@@ -56,7 +56,7 @@ if query:
     # Run search
     results = retriever.get_relevant_documents(query)
     docs = []
-if len(results) == 0:
+    if not results:
         st.warning("No results found for this query.")
     else:
     for r in results:
