@@ -8,9 +8,6 @@ __pycache__/
 .venv/
 .env.*
 
-# Streamlit
-.streamlit/
-
 # Data files
 data/vector_store/
 data/feedback_log.json
