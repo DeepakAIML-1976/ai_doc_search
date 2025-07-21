@@ -7,9 +7,9 @@ from langchain.chains import RetrievalQA
 import pickle
 import os
 from app.utils import load_feedback, save_feedback, filter_no_feedback
+import dotenv
 
 # Load environment variables
-import dotenv
 dotenv.load_dotenv()
 
 # Ensure required directories exist
@@ -31,7 +31,6 @@ with open(INDEX_METADATA_PATH, "rb") as f:
 
 vector_store = FAISS.load_local(DB_FAISS_PATH, OpenAIEmbeddings(), allow_dangerous_deserialization=True)
 retriever = vector_store.as_retriever(search_kwargs={"k": 5})
-
 llm = ChatOpenAI(temperature=0.3)
 qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
 
@@ -49,12 +48,10 @@ with st.sidebar:
 
     if st.button("🧠 Retrain Model"):
         st.info("Training model with feedback... (Mock action)")
-        # Hook into retraining here in future
 
 # Main interface
 query = st.text_input("Enter your question:")
 if query:
-    # Run search
     try:
         results = retriever.get_relevant_documents(query)
     except Exception as e:
@@ -67,16 +64,30 @@ if query:
         st.warning("No results found for this query.")
     else:
         for r in results:
-            r.metadata["id"] = f"{r.metadata.get('source')}::{r.metadata.get('page', 0)}"
+            # Safely extract metadata
+            source = r.metadata.get("source", "unknown")
+            page = r.metadata.get("page", 0)
+            doc_id = f"{source}::{page}"
+            r.metadata["id"] = doc_id
+
+            content = getattr(r, "page_content", "No content")
+
             docs.append({
-                "id": r.metadata["id"],
-                "content": r.page_content,
-                "source": r.metadata.get("source"),
-                "page": r.metadata.get("page", 0)
+                "id": doc_id,
+                "content": content,
+                "source": source,
+                "page": page
             })
 
-        # Filter based on previous feedback
-        docs = filter_no_feedback(docs, query, feedback_log)
+        # Make sure feedback structure exists
+        feedback_log.setdefault(query, {"yes": [], "no": []})
+
+        # Filter using feedback (safe)
+        try:
+            docs = filter_no_feedback(docs, query, feedback_log)
+        except Exception as e:
+            st.error(f"Error in feedback filtering: {e}")
+            docs = []
 
         if docs:
             st.subheader("Answer")
@@ -102,7 +113,6 @@ if query:
                         feedback_collected["no"].append(doc["id"])
 
             if st.button("✅ Submit Feedback"):
-                feedback_log.setdefault(query, {"yes": [], "no": []})
                 for fb_type in ["yes", "no"]:
                     for doc_id in feedback_collected[fb_type]:
                         if doc_id not in feedback_log[query][fb_type]:
