@@ -8,10 +8,11 @@ import pickle
 import os
 from app.utils import load_feedback, save_feedback, filter_no_feedback
 
-# Load environment variable
+# Load environment variables
 import dotenv
 dotenv.load_dotenv()
 
+# Ensure required directories exist
 os.makedirs("data/documents", exist_ok=True)
 os.makedirs("data/vector_store", exist_ok=True)
 
@@ -20,7 +21,7 @@ DB_FAISS_PATH = "data/vector_store"
 INDEX_METADATA_PATH = "data/vector_store/index.pkl"
 FEEDBACK_LOG_PATH = "data/feedback_log.json"
 
-# Ingest docs if not already ingested
+# Ingest docs if needed
 if not os.path.exists(DB_FAISS_PATH) or not os.path.exists(INDEX_METADATA_PATH):
     ingest_documents()
 
@@ -37,24 +38,29 @@ qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
 # Load feedback
 feedback_log = load_feedback(FEEDBACK_LOG_PATH)
 
-st.title("Semantic Search App with Feedback")
+st.title("📄 Semantic Search App with Feedback")
 
-# Sidebar actions
+# Sidebar admin controls
 with st.sidebar:
-    st.header("Admin Controls")
-    if st.button("Re-Ingest Documents"):
+    st.header("⚙️ Admin Controls")
+    if st.button("🔄 Re-Ingest Documents"):
         ingest_documents()
         st.success("Re-ingestion completed.")
 
-    if st.button("Retrain Model"):
+    if st.button("🧠 Retrain Model"):
         st.info("Training model with feedback... (Mock action)")
-        # Hook into retraining here
+        # Hook into retraining here in future
 
-# User query input
+# Main interface
 query = st.text_input("Enter your question:")
 if query:
     # Run search
-    results = retriever.get_relevant_documents(query)
+    try:
+        results = retriever.get_relevant_documents(query)
+    except Exception as e:
+        st.error(f"Search failed: {e}")
+        results = []
+
     docs = []
 
     if not results:
@@ -69,13 +75,16 @@ if query:
                 "page": r.metadata.get("page", 0)
             })
 
-        # Filter using prior feedback
+        # Filter based on previous feedback
         docs = filter_no_feedback(docs, query, feedback_log)
 
         if docs:
             st.subheader("Answer")
-            answer = qa_chain.run(query)
-            st.write(answer)
+            try:
+                answer = qa_chain.run(query)
+                st.write(answer)
+            except Exception as e:
+                st.error(f"Answer generation failed: {e}")
 
             st.subheader("Supporting Sources")
             feedback_collected = {"yes": [], "no": []}
@@ -92,7 +101,7 @@ if query:
                     elif feedback == "No":
                         feedback_collected["no"].append(doc["id"])
 
-            if st.button("Submit Feedback"):
+            if st.button("✅ Submit Feedback"):
                 feedback_log.setdefault(query, {"yes": [], "no": []})
                 for fb_type in ["yes", "no"]:
                     for doc_id in feedback_collected[fb_type]:
