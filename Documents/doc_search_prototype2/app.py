@@ -48,18 +48,18 @@ with st.sidebar:
 
     if st.button("Retrain Model"):
         st.info("Training model with feedback... (Mock action)")
-        # Here you can hook into a fine-tuning or filtering mechanism
+        # Placeholder for future fine-tuning
 
 # User query input
 query = st.text_input("Enter your question:")
 if query:
-    # Run search
     results = retriever.get_relevant_documents(query)
     docs = []
 
     if not results:
         st.warning("No results found for this query.")
     else:
+        # Process results into docs
         for r in results:
             r.metadata["id"] = f"{r.metadata.get('source')}::{r.metadata.get('page', 0)}"
             docs.append({
@@ -69,34 +69,35 @@ if query:
                 "page": r.metadata.get("page", 0)
             })
 
+        # Filter using feedback
+        docs = filter_no_feedback(docs, query, feedback_log)
 
-    # Filter using prior feedback
-    docs = filter_no_feedback(docs, query, feedback_log)
+        # Display Answer
+        st.subheader("Answer")
+        answer = qa_chain.run(query)
+        st.write(answer)
 
-    st.subheader("Answer")
-    answer = qa_chain.run(query)
-    st.write(answer)
+        # Show sources and collect feedback
+        st.subheader("Supporting Sources")
+        feedback_collected = {"yes": [], "no": []}
 
-    st.subheader("Supporting Sources")
-    feedback_collected = {"yes": [], "no": []}
+        for doc in docs:
+            with st.expander(f"Source: {doc['source']} - Page {doc['page']}"):
+                st.write(doc["content"])
+                feedback = st.radio(
+                    f"Is this relevant?", ["Not Rated", "Yes", "No"],
+                    key=f"feedback_{doc['id']}", horizontal=True
+                )
+                if feedback == "Yes":
+                    feedback_collected["yes"].append(doc["id"])
+                elif feedback == "No":
+                    feedback_collected["no"].append(doc["id"])
 
-    for doc in docs:
-        with st.expander(f"Source: {doc['source']} - Page {doc['page']}"):
-            st.write(doc["content"])
-            feedback = st.radio(
-                f"Is this relevant?", ["Not Rated", "Yes", "No"],
-                key=f"feedback_{doc['id']}", horizontal=True
-            )
-            if feedback == "Yes":
-                feedback_collected["yes"].append(doc["id"])
-            elif feedback == "No":
-                feedback_collected["no"].append(doc["id"])
-
-    if st.button("Submit Feedback"):
-        feedback_log.setdefault(query, {"yes": [], "no": []})
-        for fb_type in ["yes", "no"]:
-            for doc_id in feedback_collected[fb_type]:
-                if doc_id not in feedback_log[query][fb_type]:
-                    feedback_log[query][fb_type].append(doc_id)
-        save_feedback(feedback_log, FEEDBACK_LOG_PATH)
-        st.success("Feedback submitted!")
+        if st.button("Submit Feedback"):
+            feedback_log.setdefault(query, {"yes": [], "no": []})
+            for fb_type in ["yes", "no"]:
+                for doc_id in feedback_collected[fb_type]:
+                    if doc_id not in feedback_log[query][fb_type]:
+                        feedback_log[query][fb_type].append(doc_id)
+            save_feedback(feedback_log, FEEDBACK_LOG_PATH)
+            st.success("Feedback submitted!")
